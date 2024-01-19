@@ -8,6 +8,10 @@
 
 **Bank 合约名**：<u>SuperBank</u>（可支持 ETH 和 不同地址的 ERC20 token 的存入）
 
+**ERC20 token 合约名**：ERC20Token_GTT
+
+**SafeERC20 token 合约名**：ERC777Token_GTST（也是 ERC777 Token）
+
 #### Fuzz 测试用例（测试 Bank 合约的 ETH 存款和取款）：
 
 ```solidity
@@ -82,6 +86,73 @@ contract SuperBank_Test is Test {
         vm.expectRevert(encodedRevertMessage);
         vm.prank(_recipient);
         SuperBank_Contract.withdrawETH();
+        assertEq(
+            SuperBank_Addr.balance,
+            0,
+            "After withdrawal, the ETH balance of SuperBank should be 0"
+        );
+    }
+
+    // Case 3: Test amount of ERC20 token in depositToken()
+    /// forge-config: default.fuzz.runs = 10000
+    function testFuzz_depositToken_testAmount(uint _amount) public {
+        vm.startPrank(admin);
+        uint GTT_totalSupply = GTT_Contract.totalSupply();
+        uint GTST_totalSupply = GTST_Contract.totalSupply();
+        vm.assume(_amount <= GTT_totalSupply && _amount <= GTST_totalSupply);
+        GTT_Contract.transfer(alice, GTT_totalSupply); // The token balance of Alice equals the total supply of GTT(ERC20 token)
+        GTST_Contract.transfer(bob, GTST_totalSupply); // The token balance of Bob equals the total supply of GTST(SafeERC20&ERC777 token)
+        vm.startPrank(alice);
+        GTT_Contract.approve(SuperBank_Addr, GTT_totalSupply);
+        SuperBank_Contract.depositToken(GTT_Addr, _amount);
+        assertEq(
+            SuperBank_Contract.getTokenBalance(GTT_Addr, alice),
+            _amount,
+            "The GTT balance of Alice should equal deposited token amount"
+        );
+        vm.startPrank(bob);
+        GTST_Contract.approve(SuperBank_Addr, GTST_totalSupply);
+        SuperBank_Contract.depositToken(GTST_Addr, _amount);
+        vm.stopPrank();
+        assertEq(
+            SuperBank_Contract.getTokenBalance(GTST_Addr, bob),
+            _amount,
+            "The GTST balance of Bob should equal deposited token amount"
+        );
+    }
+
+    // Case 4: Test amount of ERC20 token in withdrawToken()
+    /// forge-config: default.fuzz.runs = 10000
+    function testFuzz_withdrawToken_testRecipient(address _recipient) public {
+        vm.assume(_recipient != admin);
+        vm.startPrank(admin);
+        uint GTT_totalSupply = GTT_Contract.totalSupply();
+        uint GTST_totalSupply = GTST_Contract.totalSupply();
+        GTT_Contract.transfer(alice, GTT_totalSupply); // The token balance of Alice equals the total supply of GTT(ERC20 token)
+        GTST_Contract.transfer(bob, GTST_totalSupply); // The token balance of Bob equals the total supply of GTST(SafeERC20&ERC777 token)
+        
+        vm.startPrank(alice);
+        GTT_Contract.approve(SuperBank_Addr, GTT_totalSupply);
+        SuperBank_Contract.depositToken(GTT_Addr, 1);
+
+        vm.startPrank(bob);
+        GTST_Contract.approve(SuperBank_Addr, GTST_totalSupply);
+        SuperBank_Contract.depositToken(GTST_Addr, 1);
+        vm.stopPrank();
+
+        bytes memory encodedRevertMessage = abi.encodeWithSignature(
+            "NotOwner(address,address)",
+            _recipient,
+            SuperBank_Contract.owner()
+        );
+
+        vm.expectRevert(encodedRevertMessage);
+        vm.prank(_recipient);
+        SuperBank_Contract.withdrawToken(GTT_Addr);
+
+        vm.expectRevert(encodedRevertMessage);
+        vm.prank(_recipient);
+        SuperBank_Contract.withdrawToken(GTST_Addr);
     }
 }
 ```
