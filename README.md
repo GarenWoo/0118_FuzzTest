@@ -78,6 +78,10 @@ contract SuperBank_Test is Test {
         uint maxBalance = 10000 ether;
         vm.assume(_recipient != admin);
         deal(_recipient, maxBalance);
+        bytes4 selector_depositETH = bytes4(keccak256("depositETH()"));
+        bytes memory data = abi.encodeWithSelector(selector_depositETH);
+        vm.prank(_recipient);
+        (bool success, ) = SuperBank_Addr.call{value: 1}(data);
         bytes memory encodedRevertMessage = abi.encodeWithSignature(
             "NotOwner(address,address)",
             _recipient,
@@ -86,10 +90,9 @@ contract SuperBank_Test is Test {
         vm.expectRevert(encodedRevertMessage);
         vm.prank(_recipient);
         SuperBank_Contract.withdrawETH();
-        assertEq(
-            SuperBank_Addr.balance,
-            0,
-            "After withdrawal, the ETH balance of SuperBank should be 0"
+        assertTrue(
+            SuperBank_Addr.balance > 0,
+            "Because the recipient is not the owner of SuperBank, the ETH balance of Bigbank isn't 0 after calling withdrawETH()"
         );
     }
 
@@ -437,6 +440,10 @@ contract NFTMarket_Test is Test {
 ```
 
 
+
+### 测试结果
+
+![IMG2_TestResult](./images/IMG2_TestResult.png)
 
 ## 3. 注册 Dune 账号
 
