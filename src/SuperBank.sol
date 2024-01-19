@@ -22,11 +22,7 @@ contract SuperBank is Bank {
         Considering the design of those functions with the prefix of 'safe' in SafeERC20 contract,
         if the token does not support safeTransferFrom, it will turn to call transferFrom instead.
         */
-        iERC20Token.safeTransferFrom(
-            msg.sender,
-            address(this),
-            _tokenAmount
-        );
+        iERC20Token.safeTransferFrom(msg.sender, address(this), _tokenAmount);
         tokenBalance[_tokenAddr][msg.sender] += _tokenAmount;
         _handleRankWhenDepositToken(_tokenAddr);
     }
@@ -50,7 +46,10 @@ contract SuperBank is Bank {
         return true;
     }
 
-    function getTokenBalance(address _tokenAddr, address _account) public view returns (uint) {
+    function getTokenBalance(
+        address _tokenAddr,
+        address _account
+    ) public view returns (uint) {
         return tokenBalance[_tokenAddr][_account];
     }
 
@@ -72,7 +71,7 @@ contract SuperBank is Bank {
             for (uint i = convertedIndex - 3; i > 1; i--) {
                 if (membershipIndex != 0) {
                     if (
-                        tokenBalance[_tokenAddr][msg.sender] >
+                        tokenBalance[_tokenAddr][msg.sender] >=
                         tokenBalance[_tokenAddr][tokenRank[i - 2]]
                     ) {
                         indexRecord = i - 2;
@@ -93,7 +92,10 @@ contract SuperBank is Bank {
         } else {
             // Case 2: msg.sender is not inside the top3 rank.
             for (uint i = 3; i > 0; i--) {
-                if (tokenBalance[_tokenAddr][msg.sender] > tokenBalance[_tokenAddr][tokenRank[i - 1]]) {
+                if (
+                    tokenBalance[_tokenAddr][msg.sender] >=
+                    tokenBalance[_tokenAddr][tokenRank[i - 1]]
+                ) {
                     indexRecord = i - 1;
                     // move backward the element(s) which is(/are) right at the index and also behind the index
                     for (uint j = 2; j > i - 1; j--) {
