@@ -75,7 +75,7 @@ contract SuperBank_Test is Test {
         SuperBank_Contract.withdrawETH();
         assertTrue(
             SuperBank_Addr.balance > 0,
-            "Because the recipient is not the owner of SuperBank, the ETH balance of Bigbank isn't 0 after calling withdrawETH()"
+            "Because the recipient is not the owner of SuperBank, the ETH balance of Bigbank is not 0 after calling withdrawETH()"
         );
     }
 
