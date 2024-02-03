@@ -19,7 +19,7 @@ contract SuperBank is Bank {
     function depositToken(address _tokenAddr, uint _tokenAmount) public {
         iERC20Token = IERC20(_tokenAddr);
         /* 
-        Considering the design of those functions with the prefix of 'safe' in SafeERC20 contract,
+        Considering the design of those functions with the prefix of 'safe' in SafeERC20 library,
         if the token does not support safeTransferFrom, it will turn to call transferFrom instead.
         */
         iERC20Token.safeTransferFrom(msg.sender, address(this), _tokenAmount);
@@ -30,7 +30,7 @@ contract SuperBank is Bank {
     function withdrawToken(address _tokenAddr) public onlyOwner {
         iERC20Token = IERC20(_tokenAddr);
         /* 
-        Considering the design of those functions with the prefix of 'safe' in SafeERC20 contract,
+        Considering the design of those functions with the prefix of 'safe' in SafeERC20 library,
         if the token does not support safeTransfer, it will turn to call transfer instead.
         */
         iERC20Token.safeTransfer(owner, iERC20Token.balanceOf(address(this)));
